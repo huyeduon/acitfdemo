@@ -5,10 +5,8 @@ There are 2 options to authenticate with ACI fabric: using password or using cer
 To use password: Simply add password = "..." to provider script.
 
 provider "aci" {
-  # cisco-aci user name
   username = var.aciUser
   password = "apicPassword"
-  # cisco-aci url
   url      = var.aciUrl
   insecure = true
 }

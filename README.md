@@ -40,8 +40,8 @@ Main.tf script is self explanatory as well with comments embedded.
 
 3. How to run:
 
-terraform plan
-terraform apply 
+terraform plan\
+terraform apply\ 
 
 then type Yes 
 

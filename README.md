@@ -1,7 +1,8 @@
 # acitfdemo
 1. aci terraform provider authentication.
 There are 2 options to authenticate with ACI fabric: using password or using cert.
-+ To use password: Simply add password = "..." to provider script.
+
+To use password: Simply add password = "..." to provider script.
 
 provider "aci" {
   # cisco-aci user name
@@ -12,7 +13,7 @@ provider "aci" {
   insecure = true
 }
 
-+ To use cert:
+To use cert:
 Create cert file using openssl or equivalent tool:
 
 openssl req -new -newkey rsa:1024 -days 36500 -nodes -x509 -keyout adminApi.key -out adminApi.crt -subj '/CN=admiApi/O=Cisco Systems/C=US'

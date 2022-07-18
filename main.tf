@@ -18,14 +18,13 @@ resource "aci_filter_entry" "ipFilterEntry" {
     prot          = "unspecified"
 }
 
-
 # create icmp filter
 resource "aci_filter" "icmpFilter" {
     tenant_dn   = aci_tenant.tfTenant.id
     name        = var.icmpFilter
 }
 
-# # create icmp filter entry
+# create icmp filter entry
 resource "aci_filter_entry" "icmpFilterEntry" {
     filter_dn     = aci_filter.icmpFilter.id
     name          = var.icmpFilterEntry

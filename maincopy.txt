@@ -1,0 +1,127 @@
+resource "aci_tenant" "tfTenant" {
+    description = var.tenantDesc
+    name        = var.tenantName
+    annotation  = var.tenantAnnotation
+}
+
+resource "aci_vrf" "vrf1" {
+    tenant_dn              = aci_tenant.tfTenant.id
+    name                   = var.vrfName
+}
+
+resource "aci_bridge_domain" "bd1" {
+    tenant_dn = aci_tenant.tfTenant.id
+    relation_fv_rs_ctx = aci_vrf.vrf1.id
+    name = var.bdName
+  
+}
+
+resource "aci_subnet" "subnet1" {
+    parent_dn = aci_bridge_domain.bd1.id
+    ip = var.bdSubnet
+    scope = [ "public","shared" ]
+}
+
+resource "aci_application_profile" "ap1" {
+    tenant_dn = aci_tenant.tfTenant.id
+    name = var.apName
+}
+
+resource "aci_application_epg" "epg1" {
+    application_profile_dn = aci_application_profile.ap1.id
+    name                   = var.epgName1
+    relation_fv_rs_bd      = aci_bridge_domain.bd1.id
+    relation_fv_rs_cons = [ aci_contract.epg1_epg2_contract.id, data.aci_contract.SharedL3.id ]
+  
+}
+
+resource "aci_application_epg" "epg2" {
+    application_profile_dn = aci_application_profile.ap1.id
+    name                   = var.epgName2
+    relation_fv_rs_bd      = aci_bridge_domain.bd1.id
+    relation_fv_rs_prov = [ aci_contract.epg1_epg2_contract.id, data.aci_contract.SharedL3.id ]
+}
+
+resource "aci_epg_to_domain" "epg1Vmm" {
+    application_epg_dn    = aci_application_epg.epg1.id
+    tdn                   = data.aci_vmm_domain.ACI.id
+    vmm_allow_promiscuous = "reject"
+    vmm_forged_transmits  = "reject"
+    vmm_mac_changes       = "accept"
+    instr_imedcy          = "immediate"
+    res_imedcy            = "pre-provision"
+}
+resource "aci_epg_to_domain" "epg2Vmm" {
+    application_epg_dn    = aci_application_epg.epg2.id
+    tdn                   = data.aci_vmm_domain.ACI.id
+    vmm_allow_promiscuous = "reject"
+    vmm_forged_transmits  = "reject"
+    vmm_mac_changes       = "accept"
+    instr_imedcy          = "immediate"
+    res_imedcy            = "pre-provision"
+}
+
+data "aci_vmm_domain" "ACI" {
+    provider_profile_dn = var.provider_profile_dn
+    name                = var.vmmDomain
+}
+
+resource "aci_filter" "icmpFilter" {
+    tenant_dn   = aci_tenant.tfTenant.id
+    name        = var.icmpFilter
+}
+
+resource "aci_filter_entry" "icmpFilterEntry" {
+    filter_dn     = aci_filter.icmpFilter.id
+    name          = var.icmpFilterEntry
+    apply_to_frag = "no"
+    arp_opc       = "unspecified"
+    d_from_port   = "unspecified"
+    d_to_port     = "unspecified"
+    ether_t       = "ip"
+    icmpv4_t      = "unspecified"
+    icmpv6_t      = "unspecified"
+    prot          = "icmp"
+    s_from_port   = "unspecified"
+    s_to_port     = "unspecified"
+}
+
+resource "aci_filter" "httpFilter" {
+    tenant_dn   = aci_tenant.tfTenant.id
+    name        = var.httpFilter
+}
+
+resource "aci_filter_entry" "httpFilterEntry" {
+    filter_dn     = aci_filter.httpFilter.id
+    name          = var.httpFilterEntry
+    apply_to_frag = "no"
+    arp_opc       = "unspecified"
+    d_from_port   = "80"
+    d_to_port     = "80"
+    ether_t       = "ip"
+    icmpv4_t      = "unspecified"
+    icmpv6_t      = "unspecified"
+    prot          = "tcp"
+    s_from_port   = "unspecified"
+    s_to_port     = "unspecified"
+}
+
+resource "aci_contract" "epg1_epg2_contract" {
+    tenant_dn   = aci_tenant.tfTenant.id
+    name        = var.epg1_epg2_contract
+}
+
+resource "aci_contract_subject" "icmp_http_subject" {
+    contract_dn   = aci_contract.epg1_epg2_contract.id
+    name          = var.icmp_http_subject
+    relation_vz_rs_subj_filt_att = [ aci_filter.icmpFilter.id, aci_filter.httpFilter.id ]
+}
+
+data "aci_tenant" "common" {
+    name = "common"  
+}
+
+data "aci_contract" "SharedL3" {
+  tenant_dn  = data.aci_tenant.common.id
+  name       = "SharedL3"
+}

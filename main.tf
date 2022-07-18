@@ -340,13 +340,13 @@ resource "aci_l3out_path_attachment" "tfdemo" {
 resource "aci_l3out_vpc_member" "tfdemoa" {
   leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
   side  = "A"
-  addr  = "172.16.7.1/24"
+  addr  = var.l3outVpcSideA
 }
 
 resource "aci_l3out_vpc_member" "tfdemob" {
   leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
   side  = "B"
-  addr  = "172.16.7.2/24"
+  addr  = var.l3outVpcSideB
 }
 
 resource "aci_external_network_instance_profile" "tfdemo" {

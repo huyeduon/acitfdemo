@@ -161,3 +161,14 @@ variable "encap-vlan" {
    type = string
    default = "vlan-1911"
 }
+
+
+variable "l3outVpcSideA" {
+   type = string
+   default = "172.16.7.1/24"
+}
+
+variable "l3outVpcSideB" {
+   type = string
+   default = "172.16.7.2/24"
+}

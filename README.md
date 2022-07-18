@@ -42,7 +42,6 @@ Main.tf script is self explanatory as well with comments embedded.
 
 terraform plan\
 terraform apply\ 
-
 then type Yes 
 
 

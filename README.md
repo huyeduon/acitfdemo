@@ -32,9 +32,20 @@ dJBf1RKVw1Y+ZGypMHTYI1vqqATTORaVpILEW8/J4AaHL7Yszem+fZHM8elNS36w
 -----END CERTIFICATE-----
 
 
-2. How to use the script:
+2. Customize your script:
 Take a look at variables.tf file, it is self explanatory. 
 In this demo, we assume that VMM domain and physical domain and layer 3 domain (external domain) are already created on APIC. The main.tf script use data source for those domains. 
+
+Main.tf script is self explanatory as well with comments embedded.
+
+3. How to run:
+
+terraform plan
+terraform apply 
+
+then type Yes 
+
+
 
 References:
 https://registry.terraform.io/providers/CiscoDevNet/aci/latest/docs

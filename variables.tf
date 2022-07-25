@@ -20,7 +20,7 @@ variable "aciUrl" {
 
 variable "tenantName" {
     type = string
-    default = "tfdemo"
+    default = "demo"
 }
 
 variable "tenantDesc" {

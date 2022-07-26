@@ -195,9 +195,14 @@ variable "ssh_subject" {
     default = "ssh_subject"
 }
 
-variable "encap-vlan" {
+variable "encap-vlan-1911" {
    type = string
    default = "vlan-1911"
+}
+
+variable "encap-vlan-1912" {
+   type = string
+   default = "vlan-1912"
 }
 
 

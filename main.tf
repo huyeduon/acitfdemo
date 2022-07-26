@@ -245,7 +245,7 @@ resource "aci_application_epg" "epg3" {
 }
 
 # Configure subnet under epg3, for inter-vrf use case between epg1 and epg3
-resource "aci_subnet" "foo_epg_subnet_next_hop_addr" {
+resource "aci_subnet" "epg3Subnet" {
     parent_dn     = aci_application_epg.epg3.id
     ip            = "172.16.1.254/24"
     scope         = ["public","shared"]
@@ -306,12 +306,18 @@ resource "aci_epg_to_domain" "epg1" {
     tdn                   = data.aci_physical_domain.insbu_phys.id
 }
 
+# epg2 to physical domain 
+resource "aci_epg_to_domain" "epg2" {
+    application_epg_dn    = aci_application_epg.epg2.id
+    tdn                   = data.aci_physical_domain.insbu_phys.id
+}
+
 
 # epg static path binding
 resource "aci_epg_to_static_path" "epg1-1" {
     application_epg_dn  = aci_application_epg.epg1.id
     tdn  = "topology/pod-1/paths-101/pathep-[eth1/18]"
-    encap  = var.encap-vlan
+    encap  = var.encap-vlan-1911
     instr_imedcy = "lazy"
     mode  = "regular"
 }
@@ -319,7 +325,23 @@ resource "aci_epg_to_static_path" "epg1-1" {
 resource "aci_epg_to_static_path" "epg1-2" {
     application_epg_dn  = aci_application_epg.epg1.id
     tdn  = "topology/pod-1/paths-102/pathep-[eth1/18]"
-    encap  = var.encap-vlan
+    encap  = var.encap-vlan-1911
+    instr_imedcy = "lazy"
+    mode  = "regular"
+}
+
+resource "aci_epg_to_static_path" "epg2-1" {
+    application_epg_dn  = aci_application_epg.epg2.id
+    tdn  = "topology/pod-1/paths-101/pathep-[eth1/18]"
+    encap  = var.encap-vlan-1912
+    instr_imedcy = "lazy"
+    mode  = "regular"
+}
+
+resource "aci_epg_to_static_path" "epg2-2" {
+    application_epg_dn  = aci_application_epg.epg2.id
+    tdn  = "topology/pod-1/paths-102/pathep-[eth1/18]"
+    encap  = var.encap-vlan-1912
     instr_imedcy = "lazy"
     mode  = "regular"
 }

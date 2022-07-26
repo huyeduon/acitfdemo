@@ -33,10 +33,14 @@ variable "tenantAlias" {
     default = "AciTerraform"
 }
 
-variable "vrfName" {
+variable "vrfName1" {
     type = string
-    default = "vrf1"
-  
+    default = "vrf1"  
+}
+
+variable "vrfName2" {
+    type = string
+    default = "vrf2"  
 }
 
 variable "bdName1" {
@@ -49,6 +53,12 @@ variable "bdName2" {
     default = "bd2"
 }
 
+variable "bdName3" {
+    type = string
+    default = "bd3"
+}
+
+
 variable "bdSubnet1" {
     type = string
     default = "192.168.1.254/24"
@@ -57,6 +67,11 @@ variable "bdSubnet1" {
 variable "bdSubnet2" {
     type = string
     default = "192.168.2.254/24"
+}
+
+variable "bdSubnet3" {
+    type = string
+    default = "172.16.1.254/24"
 }
 
 variable "apName" {
@@ -74,6 +89,11 @@ variable "epgName1" {
 variable "epgName2" {
     type = string
     default = "epg2"
+}
+
+variable "epgName3" {
+    type = string
+    default = "epg3"
 }
 
 variable "vmmDomain" {
@@ -131,6 +151,11 @@ variable "epg1_epg2_contract" {
     default = "epg1_epg2_contract"
 }
 
+variable "epg1_epg3_contract" {
+    type = string
+    default = "epg1_epg3_contract"
+}
+
 variable "epg_l3out_contract" {
     type = string
     default = "epg_l3out_contract"
@@ -141,6 +166,10 @@ variable "ip_subject" {
     default = "ip_subject"
 }
 
+variable "ip" {
+    type = string
+    default = "ip"
+}
 
 variable "icmp_subject" {
     type = string

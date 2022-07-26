@@ -90,10 +90,24 @@ resource "aci_contract" "epg1_epg2_contract" {
     name        = var.epg1_epg2_contract
 }
 
+# create epg1-epg3 contract
+resource "aci_contract" "epg1_epg3_contract" {
+    tenant_dn   = aci_tenant.tfTenant.id
+    name        = var.epg1_epg3_contract
+    scope       = "tenant"
+}
+
 # create l3out epg contract
 resource "aci_contract" "epg_l3out_contract" {
     tenant_dn   = aci_tenant.tfTenant.id
     name        = var.epg_l3out_contract
+}
+
+# create ip subject
+resource "aci_contract_subject" "ip" {
+    contract_dn   = aci_contract.epg1_epg3_contract.id
+    name          = var.ip
+    relation_vz_rs_subj_filt_att = [ aci_filter.ipFilter.id ]
 }
 
 # create ip subject
@@ -129,7 +143,13 @@ resource "aci_contract_subject" "ssh_subject" {
 # create vrf1
 resource "aci_vrf" "vrf1" {
     tenant_dn              = aci_tenant.tfTenant.id
-    name                   = var.vrfName
+    name                   = var.vrfName1
+}
+
+# create vrf1
+resource "aci_vrf" "vrf2" {
+    tenant_dn              = aci_tenant.tfTenant.id
+    name                   = var.vrfName2
 }
 
 # create bd1
@@ -148,6 +168,14 @@ resource "aci_bridge_domain" "bd2" {
   
 }
 
+# create bd3
+resource "aci_bridge_domain" "bd3" {
+    tenant_dn = aci_tenant.tfTenant.id
+    relation_fv_rs_ctx = aci_vrf.vrf2.id
+    name = var.bdName3
+  
+}
+
 # create subnet1 bd1
 resource "aci_subnet" "subnet1" {
     parent_dn = aci_bridge_domain.bd1.id
@@ -162,6 +190,12 @@ resource "aci_subnet" "subnet2" {
     scope = [ "public","shared" ]
 }
 
+# create subnet3 bd3
+resource "aci_subnet" "subnet3" {
+    parent_dn = aci_bridge_domain.bd3.id
+    ip = var.bdSubnet3
+    scope = [ "public","shared" ]
+}
 
 # Create App Logical Construct (AP, EPG...)
 # create app profile ap1
@@ -175,7 +209,7 @@ resource "aci_application_epg" "epg1" {
     application_profile_dn = aci_application_profile.ap1.id
     name                   = var.epgName1
     relation_fv_rs_bd      = aci_bridge_domain.bd1.id
-    relation_fv_rs_cons = [ aci_contract.epg1_epg2_contract.id , aci_contract.epg_l3out_contract.id ] 
+    relation_fv_rs_cons = [ aci_contract.epg1_epg2_contract.id ,aci_contract.epg1_epg3_contract.id , aci_contract.epg_l3out_contract.id ] 
     relation_fv_rs_prov = [ aci_contract.epg_l3out_contract.id ]
 }
 
@@ -185,6 +219,14 @@ resource "aci_application_epg" "epg2" {
     name                   = var.epgName2
     relation_fv_rs_bd      = aci_bridge_domain.bd2.id
     relation_fv_rs_prov = [ aci_contract.epg1_epg2_contract.id ]
+}
+
+# create epg3, map to bd3
+resource "aci_application_epg" "epg3" {
+    application_profile_dn = aci_application_profile.ap1.id
+    name                   = var.epgName3
+    relation_fv_rs_bd      = aci_bridge_domain.bd3.id
+    relation_fv_rs_prov = [ aci_contract.epg1_epg3_contract.id ]
 }
 
 # Retrieve existing VMM and PhysDomain
@@ -220,6 +262,16 @@ resource "aci_epg_to_domain" "epg2Vmm" {
     res_imedcy            = "pre-provision"
 }
 
+# associate epg3 to VMM domain
+resource "aci_epg_to_domain" "epg3Vmm" {
+    application_epg_dn    = aci_application_epg.epg3.id
+    tdn                   = data.aci_vmm_domain.ACI.id
+    vmm_allow_promiscuous = "reject"
+    vmm_forged_transmits  = "reject"
+    vmm_mac_changes       = "reject"
+    instr_imedcy          = "immediate"
+    res_imedcy            = "pre-provision"
+}
 
 
 # epg1 to physical domain 
@@ -359,9 +411,35 @@ resource "aci_external_network_instance_profile" "tfdemo" {
 
 
 resource "aci_l3_ext_subnet" "tfdemo" {
-      external_network_instance_profile_dn  = aci_external_network_instance_profile.tfdemo.id
-      description                           = "tfdemo L3 External subnet"
-      ip                                    = "0.0.0.0/0"
+    external_network_instance_profile_dn  = aci_external_network_instance_profile.tfdemo.id
+    description                           = "tfdemo L3 External subnet"
+    ip                                    = "0.0.0.0/0"
 }
 
-
+# configure subnet under epg3 using rest
+resource "aci_rest" "epg3subnet" {
+    path       = "/api/node/mo/uni/tn-demo/ap-ap1/epg-epg3.json"
+    payload = <<EOF
+        {
+			"fvSubnet": {
+				"attributes": {
+					"annotation": "",
+					"ctrl": "",
+					"descr": "",
+					"dn": "uni/tn-demo/ap-ap1/epg-epg3/subnet-[172.16.1.254/24]",
+					"ip": "172.16.1.254/24",
+					"ipDPLearning": "enabled",
+					"name": "",
+					"nameAlias": "",
+					"preferred": "no",
+					"scope": "public,shared",
+					"userdom": ":all:",
+					"virtual": "no"
+				}
+			}
+		}
+  EOF
+    depends_on = [
+    aci_application_epg.epg3
+  ]
+}

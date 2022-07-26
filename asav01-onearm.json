@@ -1,0 +1,24 @@
+{
+    "vnsSvcRedirectPol": {
+        "attributes": {
+            "dn": "uni/tn-demo/svcCont/svcRedirectPol-asav01-onearm",
+            "name": "asav01-onearm",
+            "rn": "svcRedirectPol-asav01-onearm",
+            "status": "created"
+        },
+        "children": [
+            {
+                "vnsRedirectDest": {
+                    "attributes": {
+                        "dn": "uni/tn-demo/svcCont/svcRedirectPol-asav01-onearm/RedirectDest_ip-[192.168.251.1]",
+                        "ip": "192.168.251.1",
+                        "mac": "00:50:56:b6:09:3b",
+                        "rn": "RedirectDest_ip-[192.168.251.1]",
+                        "status": "created,modified"
+                    },
+                    "children": []
+                }
+            }
+        ]
+    }
+}

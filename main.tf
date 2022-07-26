@@ -1,3 +1,4 @@
+# Create a tenant
 resource "aci_tenant" "tfTenant" {
     description = var.tenantDesc
     name        = var.tenantName
@@ -173,8 +174,16 @@ resource "aci_bridge_domain" "bd3" {
     tenant_dn = aci_tenant.tfTenant.id
     relation_fv_rs_ctx = aci_vrf.vrf2.id
     name = var.bdName3
-  
 }
+
+# create service bd
+resource "aci_bridge_domain" "bdSvc" {
+    tenant_dn = aci_tenant.tfTenant.id
+    relation_fv_rs_ctx = aci_vrf.vrf1.id
+    description = "bd for service node"
+    name = var.bdSvc
+}
+
 
 # create subnet1 bd1
 resource "aci_subnet" "subnet1" {
@@ -195,6 +204,12 @@ resource "aci_subnet" "subnet3" {
     parent_dn = aci_bridge_domain.bd3.id
     ip = var.bdSubnet3
     scope = [ "public","shared" ]
+}
+
+# create subnet for bd service
+resource "aci_subnet" "bdSvcSubnet" {
+    parent_dn = aci_bridge_domain.bdSvc.id
+    ip = var.bdSvcSubnet
 }
 
 # Create App Logical Construct (AP, EPG...)
@@ -229,15 +244,26 @@ resource "aci_application_epg" "epg3" {
     relation_fv_rs_prov = [ aci_contract.epg1_epg3_contract.id ]
 }
 
-# Retrieve existing VMM and PhysDomain
+# Configure subnet under epg3, for inter-vrf use case between epg1 and epg3
+resource "aci_subnet" "foo_epg_subnet_next_hop_addr" {
+    parent_dn     = aci_application_epg.epg3.id
+    ip            = "172.16.1.254/24"
+    scope         = ["public","shared"]
+    description   = "This subnet is created by terraform"
+    ctrl          = ["no-default-gateway"]
+    preferred     = "no"
+    virtual       = "no"
+}
 
+
+# Retrieve existing VMM and PhysDomain
 data "aci_vmm_domain" "ACI" {
     provider_profile_dn = var.provider_profile_dn
     name                = var.vmmDomain
 }
 
 data "aci_physical_domain" "insbu_phys" {
-  name  = "insbu_phys"
+    name  = "insbu_phys"
 }
 
 # associate epg1 to VMM domain
@@ -276,33 +302,32 @@ resource "aci_epg_to_domain" "epg3Vmm" {
 
 # epg1 to physical domain 
 resource "aci_epg_to_domain" "epg1" {
-  application_epg_dn    = aci_application_epg.epg1.id
-  tdn                   = data.aci_physical_domain.insbu_phys.id
+    application_epg_dn    = aci_application_epg.epg1.id
+    tdn                   = data.aci_physical_domain.insbu_phys.id
 }
 
 
 # epg static path binding
 resource "aci_epg_to_static_path" "epg1-1" {
-  application_epg_dn  = aci_application_epg.epg1.id
-  tdn  = "topology/pod-1/paths-101/pathep-[eth1/18]"
-  encap  = var.encap-vlan
-  instr_imedcy = "lazy"
-  mode  = "regular"
+    application_epg_dn  = aci_application_epg.epg1.id
+    tdn  = "topology/pod-1/paths-101/pathep-[eth1/18]"
+    encap  = var.encap-vlan
+    instr_imedcy = "lazy"
+    mode  = "regular"
 }
 
 resource "aci_epg_to_static_path" "epg1-2" {
-  application_epg_dn  = aci_application_epg.epg1.id
-  tdn  = "topology/pod-1/paths-102/pathep-[eth1/18]"
-  encap  = var.encap-vlan
-  instr_imedcy = "lazy"
-  mode  = "regular"
+    application_epg_dn  = aci_application_epg.epg1.id
+    tdn  = "topology/pod-1/paths-102/pathep-[eth1/18]"
+    encap  = var.encap-vlan
+    instr_imedcy = "lazy"
+    mode  = "regular"
 }
 
 
 # Create L3Out and related objects
- 
 data "aci_l3_domain_profile" "l3out" {
-  name  = "l3out"
+    name  = "l3out"
 }
 
 # create l3out object
@@ -317,7 +342,7 @@ resource "aci_l3_outside" "tfdemo" {
     relation_l3ext_rs_l3_dom_att = data.aci_l3_domain_profile.l3out.id
 }
 
-# enable ospf on l3out
+# Create l3out with OSPF 
 resource "aci_l3out_ospf_external_policy" "tfdemo" {
     l3_outside_dn  = aci_l3_outside.tfdemo.id
     description    = "from terraform"
@@ -328,13 +353,12 @@ resource "aci_l3out_ospf_external_policy" "tfdemo" {
     multipod_internal = "no"
 }
 
-
- resource "aci_logical_node_profile" "tfdemo_nodeProfile" {
+# create node profile
+resource "aci_logical_node_profile" "tfdemo_nodeProfile" {
     l3_outside_dn = aci_l3_outside.tfdemo.id
     description   = "ospf logical node profile"
     name          = "tfdemo_nodeProfile"
 }
-
 
 resource "aci_logical_node_to_fabric_node" "node101" {
     logical_node_profile_dn  = aci_logical_node_profile.tfdemo_nodeProfile.id
@@ -352,7 +376,7 @@ resource "aci_logical_node_to_fabric_node" "node102" {
     rtr_id_loop_back  = "no"
 }
 
-
+# create interface profile
 resource "aci_logical_interface_profile" "tfdemo_interface_profile" {
     logical_node_profile_dn = aci_logical_node_profile.tfdemo_nodeProfile.id
     description             = "tfdemo logical interface profile"
@@ -361,6 +385,7 @@ resource "aci_logical_interface_profile" "tfdemo_interface_profile" {
 
 }
 
+# create ospf interface policy
 resource "aci_ospf_interface_policy" "tfdemo" {
     tenant_dn    = aci_tenant.tfTenant.id
     name         = "tfdemoBroadcast"
@@ -373,32 +398,32 @@ resource "aci_ospf_interface_policy" "tfdemo" {
 }
 
 resource "aci_l3out_ospf_interface_profile" "tfdemo" {
-  logical_interface_profile_dn = aci_logical_interface_profile.tfdemo_interface_profile.id
-  auth_key_id                  = "1"
-  auth_type                    = "none"
-  auth_key                     = "key"
-  relation_ospf_rs_if_pol      = aci_ospf_interface_policy.tfdemo.id
+    logical_interface_profile_dn = aci_logical_interface_profile.tfdemo_interface_profile.id
+    auth_key_id                  = "1"
+    auth_type                    = "none"
+     auth_key                     = "key"
+    relation_ospf_rs_if_pol      = aci_ospf_interface_policy.tfdemo.id
 }
 
 resource "aci_l3out_path_attachment" "tfdemo" {
-  logical_interface_profile_dn  = aci_logical_interface_profile.tfdemo_interface_profile.id
-  target_dn  = "topology/pod-1/protpaths-101-102/pathep-[3750_VPC]"
-  if_inst_t = "ext-svi"
-  description = "from terraform"
-  encap  = "vlan-700"
-  encap_scope = "local"
+    logical_interface_profile_dn  = aci_logical_interface_profile.tfdemo_interface_profile.id
+    target_dn  = "topology/pod-1/protpaths-101-102/pathep-[3750_VPC]"
+    if_inst_t = "ext-svi"
+    description = "from terraform"
+    encap  = "vlan-700"
+    encap_scope = "local"
 }
 
 resource "aci_l3out_vpc_member" "tfdemoa" {
-  leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
-  side  = "A"
-  addr  = var.l3outVpcSideA
+    leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
+    side  = "A"
+    addr  = var.l3outVpcSideA
 }
 
 resource "aci_l3out_vpc_member" "tfdemob" {
-  leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
-  side  = "B"
-  addr  = var.l3outVpcSideB
+    leaf_port_dn  = aci_l3out_path_attachment.tfdemo.id
+    side  = "B"
+    addr  = var.l3outVpcSideB
 }
 
 resource "aci_external_network_instance_profile" "tfdemo" {
@@ -409,37 +434,117 @@ resource "aci_external_network_instance_profile" "tfdemo" {
     relation_fv_rs_cons = [ aci_contract.epg_l3out_contract.id ]
 }
 
-
+# Create External EPG 
 resource "aci_l3_ext_subnet" "tfdemo" {
     external_network_instance_profile_dn  = aci_external_network_instance_profile.tfdemo.id
     description                           = "tfdemo L3 External subnet"
     ip                                    = "0.0.0.0/0"
 }
 
-# configure subnet under epg3 using rest
-resource "aci_rest" "epg3subnet" {
-    path       = "/api/node/mo/uni/tn-demo/ap-ap1/epg-epg3.json"
-    payload = <<EOF
-        {
-			"fvSubnet": {
-				"attributes": {
-					"annotation": "",
-					"ctrl": "",
-					"descr": "",
-					"dn": "uni/tn-demo/ap-ap1/epg-epg3/subnet-[172.16.1.254/24]",
-					"ip": "172.16.1.254/24",
-					"ipDPLearning": "enabled",
-					"name": "",
-					"nameAlias": "",
-					"preferred": "no",
-					"scope": "public,shared",
-					"userdom": ":all:",
-					"virtual": "no"
-				}
-			}
-		}
-  EOF
+
+# Create l4-l7 device
+resource "aci_l4_l7_device" "asav01" {
+  tenant_dn                            = aci_tenant.tfTenant.id
+  name                                 = var.fw01
+  active                               = "no"
+  context_aware                        = "single-Context"
+  device_type                          = "VIRTUAL"
+  function_type                        = "GoTo"
+  is_copy                              = "no"
+  mode                                 = "legacy-Mode"
+  promiscuous_mode                     = "no"
+  service_type                         = "FW"
+  trunking                             = "no"
+  relation_vns_rs_al_dev_to_dom_p {
+    domain_dn      = "uni/vmmp-VMware/dom-POD1_ACI_DS"
+    switching_mode = "native"
+  }
+}
+
+# Create concrete device
+resource "aci_concrete_device" "asav01" {
+    l4_l7_device_dn   = aci_l4_l7_device.asav01.id
+    name              = var.fw01
+    vmm_controller_dn = "uni/vmmp-VMware/dom-POD1_ACI_DS/ctrlr-HNI05-Vcenter"
+    vm_name           = var.fw01
+}
+
+# Create concrete interface
+resource "aci_concrete_interface" "onearm" {
+    concrete_device_dn            = aci_concrete_device.asav01.id
+    name                          = "onearm"
+    encap                         = "unknown"
+    vnic_name                     = "Network adapter 2"
+}
+
+# Create logical interface (logical representation of conreate interface or group of concrete interfaces)
+resource "aci_l4_l7_logical_interface" "onearm" {
+    l4_l7_device_dn            = aci_l4_l7_device.asav01.id
+    name                       = "onearm"
+    relation_vns_rs_c_if_att_n = [aci_concrete_interface.onearm.id]
+}
+
+# Create service graph template
+resource "aci_l4_l7_service_graph_template" "asav01" {
+    tenant_dn                         = aci_tenant.tfTenant.id
+    name                              = "asav01"
+    description                       = "from terraform"
+    l4_l7_service_graph_template_type = "legacy"
+    ui_template_type                  = "UNSPECIFIED"
+    term_prov_name                    = "T2"
+    term_cons_name                    = "T1"
+}
+
+# Add function node to service graph template
+resource "aci_function_node" "asav01" {
+    l4_l7_service_graph_template_dn = aci_l4_l7_service_graph_template.asav01.id
+    name                            = "N1"
+    func_template_type              = "FW_ROUTED"
+    func_type                       = "GoTo"
+    managed                         = "no"
+    routing_mode                    = "Redirect"
+    sequence_number                 = "0"
+    relation_vns_rs_node_to_l_dev   =  aci_l4_l7_device.asav01.id
     depends_on = [
-    aci_application_epg.epg3
+        aci_l4_l7_device.asav01
+    ]
+  
+}
+
+resource "aci_connection" "conn1" {
+  l4_l7_service_graph_template_dn  = aci_l4_l7_service_graph_template.asav01.id
+  name  = "conn1"
+  adj_type  = "L3"
+  conn_dir  = "consumer"
+  unicast_route  = "yes"
+  relation_vns_rs_abs_connection_conns = [
+    aci_l4_l7_service_graph_template.asav01.term_cons_dn,
+    aci_function_node.asav01.conn_consumer_dn
   ]
+}
+
+resource "aci_connection" "conn2" {
+  l4_l7_service_graph_template_dn  = aci_l4_l7_service_graph_template.asav01.id
+  name  = "conn2"
+  adj_type  = "L3"
+  conn_dir  = "provider"
+  unicast_route  = "yes"
+  relation_vns_rs_abs_connection_conns = [
+    aci_l4_l7_service_graph_template.asav01.term_prov_dn,
+    aci_function_node.asav01.conn_provider_dn
+  ]
+}
+
+# Create service redirect policy
+resource "aci_service_redirect_policy" "asav01-onearm" {
+  tenant_dn               = aci_tenant.tfTenant.id
+  name                    = var.redirectPolName
+}
+
+# Add destination IP address to redirect policy
+resource "aci_destination_of_redirected_traffic" "asav01-onearm" {
+  service_redirect_policy_dn  = aci_service_redirect_policy.asav01-onearm.id
+  ip                          = var.redirectIp
+  mac                         = var.redirectMac
+  description                 = "From Terraform"
 }

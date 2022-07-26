@@ -58,6 +58,10 @@ variable "bdName3" {
     default = "bd3"
 }
 
+variable "bdSvc" {
+    type = string
+    default = "bd-svc"
+}
 
 variable "bdSubnet1" {
     type = string
@@ -72,6 +76,11 @@ variable "bdSubnet2" {
 variable "bdSubnet3" {
     type = string
     default = "172.16.1.254/24"
+}
+
+variable "bdSvcSubnet" {
+    type = string
+    default = "192.168.251.254/24"
 }
 
 variable "apName" {
@@ -200,4 +209,26 @@ variable "l3outVpcSideA" {
 variable "l3outVpcSideB" {
    type = string
    default = "172.16.7.2/24"
+}
+
+
+variable "fw01" {
+    type = string
+    default = "asav01"
+}
+
+
+variable "redirectIp" {
+    type = string
+    default = "192.168.251.1"
+}
+
+variable "redirectMac" {
+    type = string
+    default = "00:50:56:b6:09:3b"
+}
+
+variable "redirectPolName" {
+    type = string
+    default = "asav01-onearm"
 }

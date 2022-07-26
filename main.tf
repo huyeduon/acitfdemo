@@ -147,7 +147,7 @@ resource "aci_vrf" "vrf1" {
     name                   = var.vrfName1
 }
 
-# create vrf1
+# create vrf2
 resource "aci_vrf" "vrf2" {
     tenant_dn              = aci_tenant.tfTenant.id
     name                   = var.vrfName2

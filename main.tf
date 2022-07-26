@@ -139,7 +139,7 @@ resource "aci_contract_subject" "ssh_subject" {
     relation_vz_rs_subj_filt_att = [ aci_filter.sshFilter.id ]
 }
 
-# Create networking construct
+# Create networking construct vrf, bd
 
 # create vrf1
 resource "aci_vrf" "vrf1" {

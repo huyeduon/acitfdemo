@@ -4,6 +4,7 @@ resource "aci_tenant" "tfTenant" {
     name        = var.tenantName
 }
 
+
 # Create security policy (contracts and related objects)
 # create ip filter
 resource "aci_filter" "ipFilter" {

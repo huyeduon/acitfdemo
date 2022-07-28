@@ -226,7 +226,6 @@ resource "aci_application_epg" "epg1" {
     name                   = var.epgName1
     relation_fv_rs_bd      = aci_bridge_domain.bd1.id
     relation_fv_rs_cons = [ aci_contract.epg1_epg2_contract.id ,aci_contract.epg1_epg3_contract.id , aci_contract.epg_l3out_contract.id ] 
-    relation_fv_rs_prov = [ aci_contract.epg_l3out_contract.id ]
 }
 
 # create epg2, map to bd2
@@ -454,7 +453,6 @@ resource "aci_external_network_instance_profile" "tfdemo" {
     description    = "from terraform"
     name           = "tfdemoExtEpg" 
     relation_fv_rs_prov = [ aci_contract.epg_l3out_contract.id ]
-    relation_fv_rs_cons = [ aci_contract.epg_l3out_contract.id ]
 }
 
 # Create External EPG 

@@ -242,6 +242,7 @@ resource "aci_application_epg" "epg3" {
     name                   = var.epgName3
     relation_fv_rs_bd      = aci_bridge_domain.bd3.id
     relation_fv_rs_prov = [ aci_contract.epg1_epg3_contract.id ]
+    relation_fv_rs_cons = [ aci_contract.epg_l3out_contract.id ]
 }
 
 # Configure subnet under epg3, for inter-vrf use case between epg1 and epg3
@@ -423,7 +424,7 @@ resource "aci_l3out_ospf_interface_profile" "tfdemo" {
     logical_interface_profile_dn = aci_logical_interface_profile.tfdemo_interface_profile.id
     auth_key_id                  = "1"
     auth_type                    = "none"
-     auth_key                     = "key"
+    auth_key                     = "key"
     relation_ospf_rs_if_pol      = aci_ospf_interface_policy.tfdemo.id
 }
 
@@ -448,6 +449,7 @@ resource "aci_l3out_vpc_member" "tfdemob" {
     addr  = var.l3outVpcSideB
 }
 
+# create external EPG
 resource "aci_external_network_instance_profile" "tfdemo" {
     l3_outside_dn  = aci_l3_outside.tfdemo.id
     description    = "from terraform"
@@ -455,11 +457,12 @@ resource "aci_external_network_instance_profile" "tfdemo" {
     relation_fv_rs_prov = [ aci_contract.epg_l3out_contract.id ]
 }
 
-# Create External EPG 
+# Create subnet for External EPG
 resource "aci_l3_ext_subnet" "tfdemo" {
     external_network_instance_profile_dn  = aci_external_network_instance_profile.tfdemo.id
     description                           = "tfdemo L3 External subnet"
     ip                                    = "0.0.0.0/0"
+    scope = [ "shared-rtctrl", "shared-security", "import-security" ]   
 }
 
 

@@ -37,14 +37,17 @@ Take a look at variables.tf file, it is self explanatory.
 In this demo, we assume that VMM domain and physical domain and layer 3 domain (external domain) are already created on APIC. The main.tf script use data source for those domains. 
 
 What does the script do:
-- Create tenant, vrf, bd, service bd
+- Create tenant, vrf, bd, service bd:
+  epg1 in bd1, epg2 in bd2, epg3 in bd3. bd1, bd2 in vrf1, bd3 in vrf2
 - Create epg, map epg to VMM domain, physical domain, deploy EPG to vmm and physical domains
 - Create filter, contracts 
-- Create L3Out OSPF
+- Create L3Out OSPF in vrf1, create external EPG, config flag for shared-l3out. epg3 can use l3out in vrf1.
 - Apply contract between epg, epg to external epg
 - Create service node (Firewall)
 - Create service graph template
 - Create service redirect policy 
+
+The script does NOT apply service graph template.
 
 Main.tf script is self explanatory as well with comments embedded.
 

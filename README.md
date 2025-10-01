@@ -14,8 +14,9 @@ provider "aci" {
 To use cert:
 Create cert file using openssl or equivalent tool:
 
-# openssl req -new -newkey rsa:1024 -days 36500 -nodes -x509 -keyout adminApi.key -out adminApi.crt -subj '/CN=admiApi/O=Cisco Systems/C=US'
-# openssl x509 -text -in adminApi.crt
+openssl req -new -newkey rsa:1024 -days 36500 -nodes -x509 -keyout adminApi.key -out adminApi.crt -subj '/CN=admiApi/O=Cisco Systems/C=US'
+
+openssl x509 -text -in adminApi.crt
 
 Create a local username adminApi (for example).
 Add X509 certificate for above local user. Content of certicate file is similar to this format:
